@@ -1,0 +1,44 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #F5F5F5; color: #1A1A1A; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #fff; border-bottom: 1px solid #E5E5E5; }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #E3F2FD; color: #1565C0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+.salon-name { font-size: 15px; font-weight: 600; }
+.salon-sub { font-size: 12px; color: #888; }
+.badge-live { background: #E8F5E9; color: #2E7D32; font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 500; }
+.content { padding: 20px; }
+.section-title { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card { background: #fff; border-radius: 10px; padding: 16px; border: 1px solid #EEEEEE; }
+.stat-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 600; color: #1A1A1A; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.card { background: #fff; border-radius: 12px; border: 1px solid #EEEEEE; padding: 16px; }
+.empty { color: #aaa; font-size: 13px; text-align: center; padding: 20px 0; }
+.call-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
+.call-item:last-child { border-bottom: none; }
+.call-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.icon-rdv { background: #FFF8E1; }
+.icon-msg { background: #E3F2FD; }
+.icon-info { background: #F3E5F5; }
+.call-name { font-size: 13px; font-weight: 600; }
+.call-detail { font-size: 12px; color: #888; margin-top: 2px; }
+.call-time { font-size: 11px; color: #aaa; margin-left: auto; white-space: nowrap; }
+.rdv-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
+.rdv-item:last-child { border-bottom: none; }
+.rdv-date { background: #F5F5F5; border-radius: 8px; padding: 6px 10px; text-align: center; flex-shrink: 0; }
+.rdv-day { font-size: 18px; font-weight: 600; line-height: 1; }
+.rdv-month { font-size: 10px; color: #888; text-transform: uppercase; }
+.rdv-name { font-size: 13px; font-weight: 600; }
+.rdv-service { font-size: 12px; color: #888; margin-top: 2px; }
+.rdv-heure { font-size: 12px; color: #aaa; margin-left: auto; }
+.msg-item { padding: 10px 0; border-bottom: 1px solid #F5F5F5; }
+.msg-item:last-child { border-bottom: none; }
+.msg-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.msg-name { font-size: 13px; font-weight: 600; }
+.msg-time { font-size: 11px; color: #aaa; }
+.msg-text { font-size: 12px; color: #555; }
+@media (max-width: 600px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+}
