@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Salon Prestige — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="avatar">SP</div>
+        <div>
+          <div class="salon-name">Salon Prestige</div>
+          <div class="salon-sub" id="periode">Chargement...</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge-live" id="badge-status">● Céline active</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <p class="section-title">ce mois-ci</p>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <p class="stat-label">Appels reçus</p>
+          <p class="stat-value" id="stat-appels">—</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">RDV pris</p>
+          <p class="stat-value" id="stat-rdv">—</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Durée moy.</p>
+          <p class="stat-value" id="stat-duree">—</p>
+        </div>
+        <div class="stat-card">
+          <p class="stat-label">Messages</p>
+          <p class="stat-value" id="stat-messages">—</p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <p class="section-title">derniers appels</p>
+          <div class="card" id="liste-appels">
+            <p class="empty">Chargement...</p>
+          </div>
+        </div>
+        <div>
+          <p class="section-title">prochains rendez-vous</p>
+          <div class="card" id="liste-rdv">
+            <p class="empty">Chargement...</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title">derniers messages clients</p>
+      <div class="card" id="liste-messages">
+        <p class="empty">Chargement...</p>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
