@@ -1,6 +1,5 @@
-const SHEET_ID = "METS_TON_SPREADSHEET_ID_ICI";
-const API_KEY = "METS_TA_CLE_API_GOOGLE_ICI";
-
+const SHEET_ID = "1OXPJTOaH0YVXy8E-P909bVFCu8R6-1k2-XuTsFpFOJI";
+const API_KEY = "AIzaSyAkLjqv-i5uCyXbUFoCiwMDBz12UgGeSYc";
 const SHEETS = {
   appels: "APPELS",
   rdv: "RDV",
