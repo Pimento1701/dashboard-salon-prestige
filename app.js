@@ -1,9 +1,7 @@
 const SHEET_ID = "1OXPJTOaH0YVXy8E-P909bVFCu8R6-1k2-XuTsFpFOJI";
 const API_KEY = "AIzaSyAkLjqv-i5uCyXbUFoCiwMDBz12UgGeSYc";
-const SHEETS = {
-  appels: "APPELS",
-  rdv: "RDV",
-};
+
+const SHEETS = { appels: "APPELS", rdv: "RDV" };
 
 function formatDuree(secondes) {
   const s = parseInt(secondes) || 0;
@@ -16,8 +14,7 @@ function formatDate(isoStr) {
   if (!isoStr) return "";
   const d = new Date(isoStr);
   const now = new Date();
-  const diffMs = now - d;
-  const diffMin = Math.floor(diffMs / 60000);
+  const diffMin = Math.floor((now - d) / 60000);
   const diffH = Math.floor(diffMin / 60);
   const diffJ = Math.floor(diffH / 24);
   if (diffMin < 1) return "à l'instant";
@@ -46,11 +43,9 @@ async function loadDashboard() {
     const moisNom = now.toLocaleDateString("fr-CH", { month: "long", year: "numeric" });
     document.getElementById("periode").textContent = `Tableau de bord — ${moisNom}`;
 
-    // Charger les appels
     const appelsRows = await fetchSheet(SHEETS.appels);
     const appels = appelsRows.slice(1).filter(r => r[0]);
 
-    // Stats du mois
     const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
     const appelsMois = appels.filter(r => new Date(r[0]) >= debutMois);
     const rdvMois = appelsMois.filter(r => r[2] === "rdv");
