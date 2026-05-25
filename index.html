@@ -84,7 +84,7 @@
     .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); font-size: 12.5px; font-family: 'DM Sans', sans-serif; cursor: pointer; color: var(--text2); transition: all .15s; }
     .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
     .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .rdv-row { display: grid; grid-template-columns: 130px 1fr 160px 120px 90px; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .rdv-row { display: grid; grid-template-columns: 130px 1fr 160px 120px 90px; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--border); font-size: 13px; transition: background .1s; }
     .rdv-row:hover { background: var(--bg); }
     .rdv-row.past { opacity: .55; }
     .rdv-row-day { font-weight: 600; }
@@ -126,97 +126,10 @@
     .cal-cell.today { background: var(--accent-light); }
     .cal-day-num { font-size: 12.5px; font-weight: 600; color: var(--text2); margin-bottom: 4px; }
     .cal-cell.today .cal-day-num { color: var(--accent); }
-    .cal-rdv-chip { background: var(--accent); color: #fff; border-radius: 4px; padding: 2px 5px; font-size: 10px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cal-rdv-chip { background: var(--accent); color: #fff; border-radius: 4px; padding: 2px 5px; font-size: 10px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: opacity .1s; }
+    .cal-rdv-chip:hover { opacity: .85; }
     .cal-rdv-chip span { font-family: 'DM Mono', monospace; opacity: .85; margin-right: 3px; }
     .cal-more { font-size: 10px; color: var(--text3); padding: 1px 4px; }
-  </style>
-</head>
-<body>
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="salon-name">Salon Prestige</div>
-    <div class="salon-sub">Dashboard Céline IA</div>
-  </div>
-  <div class="sidebar-status">
-    <div class="status-dot"></div>
-    <span class="status-label">Céline active</span>
-  </div>
-  <nav class="nav">
-    <div class="nav-section">Vue générale</div>
-    <div class="nav-item active" data-tab="dashboard"><span class="nav-icon">📊</span> Dashboard</div>
-    <div class="nav-item" data-tab="calendrier"><span class="nav-icon">📆</span> Calendrier</div>
-    <div class="nav-section">Données</div>
-    <div class="nav-item" data-tab="rdv"><span class="nav-icon">📅</span> Rendez-vous</div>
-    <div class="nav-item" data-tab="messages"><span class="nav-icon">💬</span> Messages</div>
-    <div class="nav-item" data-tab="appels"><span class="nav-icon">📞</span> Appels</div>
-  </nav>
-  <div class="sidebar-footer" id="last-update">—</div>
-</aside>
-
-<main class="main">
-  <div class="topbar">
-    <div class="topbar-title" id="periode">Tableau de bord</div>
-  </div>
-  <div class="content">
-
-    <div id="tab-dashboard" class="tab-content active">
-      <div class="stats-grid">
-        <div class="stat-card accent"><div class="stat-label">Appels reçus</div><div class="stat-value" id="stat-appels">—</div></div>
-        <div class="stat-card green"><div class="stat-label">RDV pris</div><div class="stat-value" id="stat-rdv">—</div></div>
-        <div class="stat-card"><div class="stat-label">Durée moy.</div><div class="stat-value" id="stat-duree">—</div></div>
-        <div class="stat-card purple"><div class="stat-label">Messages</div><div class="stat-value" id="stat-messages">—</div></div>
-        <div class="stat-card orange"><div class="stat-label">Taux RDV</div><div class="stat-value" id="stat-taux">—</div></div>
-      </div>
-      <div class="dashboard-grid">
-        <div class="card"><div class="card-header"><span class="card-title">Derniers appels</span></div><div class="card-body" id="liste-appels"></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">Prochains rendez-vous</span></div><div class="card-body" id="liste-rdv"></div></div>
-        <div class="card full-width"><div class="card-header"><span class="card-title">Derniers messages</span></div><div class="card-body" id="liste-messages"></div></div>
-      </div>
-    </div>
-
-    <div id="tab-calendrier" class="tab-content">
-      <div class="tab-header">
-        <div class="tab-heading">Calendrier</div>
-        <div class="cal-nav">
-          <button class="cal-nav-btn" id="cal-prev">‹</button>
-          <div id="cal-title">—</div>
-          <button class="cal-nav-btn" id="cal-next">›</button>
-        </div>
-      </div>
-      <div id="cal-body"></div>
-    </div>
-
-    <div id="tab-rdv" class="tab-content">
-      <div class="tab-header">
-        <div class="tab-heading">Tous les rendez-vous</div>
-        <div class="filter-bar">
-          <button class="filter-btn active" data-filter="tous">Tous</button>
-          <button class="filter-btn" data-filter="avenir">À venir</button>
-          <button class="filter-btn" data-filter="passes">Passés</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="rdv-table-header"><div>Date</div><div>Client</div><div>Service</div><div>Coiffeuse</div><div>Statut</div></div>
-        <div id="rdv-list-full"></div>
-      </div>
-    </div>
-
-    <div id="tab-messages" class="tab-content">
-      <div class="tab-header"><div class="tab-heading">Tous les messages</div></div>
-      <div class="card"><div id="messages-list-full"></div></div>
-    </div>
-
-    <div id="tab-appels" class="tab-content">
-      <div class="tab-header"><div class="tab-heading">Historique des appels</div></div>
-      <div class="card">
-        <div class="appel-table-header"><div></div><div>Client</div><div>Date</div><div>Durée</div><div>Type</div><div>Transcript</div></div>
-        <div id="appels-list-full"></div>
-      </div>
-    </div>
-
-  </div>
-</main>
-
-<script src="app.js"></script>
-</body>
-</html>
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; }
+    .modal-box { background: var(--surface); b
