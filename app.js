@@ -51,6 +51,44 @@ function setTab(tab) {
   if (tab === "appels") renderAppelsFull();
 }
 
+// ── Modal ──────────────────────────────────────────────────────────────────
+function openModal(r) {
+  const dt = new Date(r[3]);
+  document.getElementById("modal-content").innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px">Rendez-vous</div>
+      <div style="font-size:22px;font-weight:600;color:var(--text)">${r[5] || "Client"}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;font-size:13.5px;color:var(--text2)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:18px">📅</span>
+        <span>${dt.toLocaleDateString("fr-CH", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:18px">🕐</span>
+        <span style="font-weight:600;color:var(--text)">${formatTime(r[3])}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:18px">✂️</span>
+        <span>${r[2] || "—"}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:18px">💇</span>
+        <span>${r[1] || "—"}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:18px">📞</span>
+        <span style="font-family:'DM Mono',monospace">${r[4] || "—"}</span>
+      </div>
+    </div>`;
+  document.getElementById("modal-overlay").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").style.display = "none";
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
 function renderDashboard() {
   const now = new Date(), dm = new Date(now.getFullYear(), now.getMonth(), 1);
   const mois = allAppels.filter(r => new Date(r[0]) >= dm);
@@ -80,8 +118,10 @@ function renderDashboard() {
       }).join("")
     : '<p class="empty">Aucun appel</p>';
 
-  const prochains = allRdvs.filter(r => r[3] && new Date(r[3]) >= now)
-    .sort((a, b) => new Date(a[3]) - new Date(b[3])).slice(0, 5);
+  const prochains = allRdvs
+    .filter(r => r[3] && new Date(r[3]) >= now)
+    .sort((a, b) => new Date(a[3]) - new Date(b[3]))
+    .slice(0, 5);
   document.getElementById("liste-rdv").innerHTML = prochains.length
     ? prochains.map(r => {
         const dt = new Date(r[3]);
@@ -111,6 +151,7 @@ function renderDashboard() {
     : '<p class="empty">Aucun message</p>';
 }
 
+// ── RDV Tab ────────────────────────────────────────────────────────────────
 function renderRdvFull(filter) {
   document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === filter));
   const now = new Date();
@@ -121,9 +162,15 @@ function renderRdvFull(filter) {
   document.getElementById("rdv-list-full").innerHTML = rdvs.length
     ? rdvs.map(r => {
         const dt = new Date(r[3]), past = dt < now;
-        return `<div class="rdv-row ${past ? "past" : ""}">
-          <div><div class="rdv-row-day">${dt.getDate()} ${dt.toLocaleDateString("fr-CH", { month: "short" })}</div><div class="rdv-row-time">${formatTime(r[3])}</div></div>
-          <div><div class="rdv-row-name">${r[5] || "Client"}</div><div class="rdv-row-phone">${r[4] || ""}</div></div>
+        return `<div class="rdv-row ${past ? "past" : ""}" onclick='openModal(${JSON.stringify(r)})' style="cursor:pointer">
+          <div>
+            <div class="rdv-row-day">${dt.getDate()} ${dt.toLocaleDateString("fr-CH", { month: "short" })}</div>
+            <div class="rdv-row-time">${formatTime(r[3])}</div>
+          </div>
+          <div>
+            <div class="rdv-row-name">${r[5] || "Client"}</div>
+            <div class="rdv-row-phone">${r[4] || ""}</div>
+          </div>
           <div class="rdv-row-service">${r[2] || "—"}</div>
           <div class="rdv-row-coiff">${r[1] || "—"}</div>
           <div class="${past ? "status-past" : "status-avenir"}">${past ? "Passé" : "À venir"}</div>
@@ -132,12 +179,16 @@ function renderRdvFull(filter) {
     : '<p class="empty">Aucun rendez-vous</p>';
 }
 
+// ── Messages Tab ───────────────────────────────────────────────────────────
 function renderMessagesFull() {
   const msgs = allAppels.filter(r => r[2] === "message").reverse();
   document.getElementById("messages-list-full").innerHTML = msgs.length
     ? msgs.map(r => `<div class="msg-full-item">
         <div class="msg-full-header">
-          <div><span class="msg-full-name">${r[3] || "Inconnu"}</span><span class="msg-full-phone">${r[4] || ""}</span></div>
+          <div>
+            <span class="msg-full-name">${r[3] || "Inconnu"}</span>
+            <span class="msg-full-phone">${r[4] || ""}</span>
+          </div>
           <span class="msg-full-time">${formatDateFull(r[0])} à ${formatTime(r[0])}</span>
         </div>
         <p class="msg-full-text">${r[5] || ""}</p>
@@ -145,6 +196,7 @@ function renderMessagesFull() {
     : '<p class="empty">Aucun message</p>';
 }
 
+// ── Appels Tab ─────────────────────────────────────────────────────────────
 function renderAppelsFull() {
   const appels = [...allAppels].reverse();
   document.getElementById("appels-list-full").innerHTML = appels.length
@@ -152,7 +204,10 @@ function renderAppelsFull() {
         const { icon, cls, badge } = typeInfo(r[2]);
         return `<div class="appel-row">
           <div class="appel-row-icon ${cls}">${icon}</div>
-          <div><div class="appel-row-name">${r[3] || "Inconnu"}</div><div class="appel-row-phone">${r[4] || ""}</div></div>
+          <div>
+            <div class="appel-row-name">${r[3] || "Inconnu"}</div>
+            <div class="appel-row-phone">${r[4] || ""}</div>
+          </div>
           <div class="appel-row-date">${formatDateFull(r[0])} ${formatTime(r[0])}</div>
           <div class="appel-row-duree">${r[1] ? formatDuree(r[1]) : "—"}</div>
           <div class="appel-row-type ${badge}">${r[2] || "info"}</div>
@@ -162,11 +217,13 @@ function renderAppelsFull() {
     : '<p class="empty">Aucun appel</p>';
 }
 
+// ── Calendrier Tab ─────────────────────────────────────────────────────────
 function renderCalendar() {
   const y = currentCalMonth.getFullYear(), m = currentCalMonth.getMonth(), now = new Date();
   document.getElementById("cal-title").textContent = currentCalMonth.toLocaleDateString("fr-CH", { month: "long", year: "numeric" });
   const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
   let start = first.getDay() === 0 ? 6 : first.getDay() - 1;
+
   const byDay = {};
   allRdvs.forEach(r => {
     if (!r[3]) return;
@@ -177,15 +234,22 @@ function renderCalendar() {
       byDay[k].push(r);
     }
   });
+
   const days = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
   let html = `<div class="cal-grid">${days.map(d => `<div class="cal-header-cell">${d}</div>`).join("")}`;
   for (let i = 0; i < start; i++) html += `<div class="cal-cell empty"></div>`;
+
   for (let d = 1; d <= last.getDate(); d++) {
     const today = d === now.getDate() && m === now.getMonth() && y === now.getFullYear();
     const dr = byDay[d] || [];
     html += `<div class="cal-cell ${today ? "today" : ""}">
       <div class="cal-day-num">${d}</div>
-      ${dr.slice(0, 3).map(r => `<div class="cal-rdv-chip" title="${r[5] || "Client"} — ${formatTime(r[3])}"><span>${formatTime(r[3])}</span>${(r[5] || "Client").split(" ")[0]}</div>`).join("")}
+      ${dr.slice(0, 3).map(r => {
+        const safeR = JSON.stringify(r).replace(/'/g, "&#39;");
+        return `<div class="cal-rdv-chip" style="cursor:pointer" onclick='openModal(${safeR})'>
+          <span>${formatTime(r[3])}</span>${(r[5] || "Client").split(" ")[0]}
+        </div>`;
+      }).join("")}
       ${dr.length > 3 ? `<div class="cal-more">+${dr.length - 3}</div>` : ""}
     </div>`;
   }
@@ -193,6 +257,7 @@ function renderCalendar() {
   document.getElementById("cal-body").innerHTML = html;
 }
 
+// ── Load Data ──────────────────────────────────────────────────────────────
 async function loadData() {
   try {
     const [ar, rr] = await Promise.all([fetchSheet(SHEETS.appels), fetchSheet(SHEETS.rdv)]);
@@ -211,10 +276,12 @@ async function loadData() {
   }
 }
 
+// ── Init ───────────────────────────────────────────────────────────────────
 document.querySelectorAll(".nav-item").forEach(el => el.addEventListener("click", () => setTab(el.dataset.tab)));
 document.querySelectorAll(".filter-btn").forEach(b => b.addEventListener("click", () => renderRdvFull(b.dataset.filter)));
 document.getElementById("cal-prev").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() - 1); renderCalendar(); });
 document.getElementById("cal-next").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() + 1); renderCalendar(); });
+document.getElementById("modal-overlay").addEventListener("click", function(e) { if (e.target === this) closeModal(); });
 
 loadData();
 setInterval(loadData, 60000);
