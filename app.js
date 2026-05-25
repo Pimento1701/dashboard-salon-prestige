@@ -1,135 +1,220 @@
 const SHEET_ID = "1OXPJTOaH0YVXy8E-P909bVFCu8R6-1k2-XuTsFpFOJI";
 const API_KEY = "AIzaSyAkLjqv-i5uCyXbUFoCiwMDBz12UgGeSYc";
-
 const SHEETS = { appels: "APPELS", rdv: "RDV" };
 
-function formatDuree(secondes) {
-  const s = parseInt(secondes) || 0;
-  const m = Math.floor(s / 60);
-  const sec = s % 60;
-  return m > 0 ? `${m}m${sec.toString().padStart(2, "0")}` : `${sec}s`;
-}
+let currentTab = "dashboard";
+let currentCalMonth = new Date();
+let allAppels = [];
+let allRdvs = [];
 
-function formatDate(isoStr) {
-  if (!isoStr) return "";
-  const d = new Date(isoStr);
-  const now = new Date();
-  const diffMin = Math.floor((now - d) / 60000);
-  const diffH = Math.floor(diffMin / 60);
-  const diffJ = Math.floor(diffH / 24);
-  if (diffMin < 1) return "à l'instant";
-  if (diffMin < 60) return `il y a ${diffMin} min`;
-  if (diffH < 24) return `aujourd'hui ${d.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" })}`;
-  if (diffJ === 1) return "hier";
+function formatDuree(s) {
+  const t = parseInt(s) || 0, m = Math.floor(t / 60), r = t % 60;
+  return m > 0 ? `${m}m${String(r).padStart(2, "0")}` : `${r}s`;
+}
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso), now = new Date();
+  const dm = Math.floor((now - d) / 60000), dh = Math.floor(dm / 60), dj = Math.floor(dh / 24);
+  if (dm < 1) return "à l'instant";
+  if (dm < 60) return `il y a ${dm} min`;
+  if (dh < 24) return `aujourd'hui ${d.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" })}`;
+  if (dj === 1) return "hier";
   return d.toLocaleDateString("fr-CH", { day: "numeric", month: "short" });
 }
-
-function getTypeIcon(type) {
-  if (type === "rdv") return { icon: "📅", cls: "icon-rdv" };
-  if (type === "message") return { icon: "💬", cls: "icon-msg" };
-  return { icon: "📞", cls: "icon-info" };
+function formatTime(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+}
+function formatDateFull(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("fr-CH", { day: "numeric", month: "short", year: "numeric" });
+}
+function typeInfo(t) {
+  if (t === "rdv") return { icon: "📅", cls: "icon-rdv", badge: "badge-rdv" };
+  if (t === "message") return { icon: "💬", cls: "icon-msg", badge: "badge-message" };
+  return { icon: "📞", cls: "icon-info", badge: "badge-info" };
 }
 
-async function fetchSheet(sheetName) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${sheetName}!A:H?key=${API_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
-  return data.values || [];
+async function fetchSheet(name) {
+  const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${name}!A:H?key=${API_KEY}`);
+  const d = await r.json();
+  return d.values || [];
 }
 
-async function loadDashboard() {
-  try {
-    const now = new Date();
-    const moisNom = now.toLocaleDateString("fr-CH", { month: "long", year: "numeric" });
-    document.getElementById("periode").textContent = `Tableau de bord — ${moisNom}`;
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.tab === tab));
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.toggle("active", el.id === `tab-${tab}`));
+  if (tab === "calendrier") renderCalendar();
+  if (tab === "rdv") renderRdvFull("tous");
+  if (tab === "messages") renderMessagesFull();
+  if (tab === "appels") renderAppelsFull();
+}
 
-    const appelsRows = await fetchSheet(SHEETS.appels);
-    const appels = appelsRows.slice(1).filter(r => r[0]);
+function renderDashboard() {
+  const now = new Date(), dm = new Date(now.getFullYear(), now.getMonth(), 1);
+  const mois = allAppels.filter(r => new Date(r[0]) >= dm);
+  const rdvM = mois.filter(r => r[2] === "rdv"), msgM = mois.filter(r => r[2] === "message");
+  const durs = mois.map(r => parseInt(r[1]) || 0).filter(d => d > 0);
+  const moy = durs.length ? Math.round(durs.reduce((a, b) => a + b, 0) / durs.length) : 0;
+  const taux = mois.length ? Math.round(rdvM.length / mois.length * 100) : 0;
 
-    const debutMois = new Date(now.getFullYear(), now.getMonth(), 1);
-    const appelsMois = appels.filter(r => new Date(r[0]) >= debutMois);
-    const rdvMois = appelsMois.filter(r => r[2] === "rdv");
-    const msgMois = appelsMois.filter(r => r[2] === "message");
-    const durees = appelsMois.map(r => parseInt(r[1]) || 0).filter(d => d > 0);
-    const dureeMoy = durees.length > 0 ? Math.round(durees.reduce((a, b) => a + b, 0) / durees.length) : 0;
+  document.getElementById("stat-appels").textContent = mois.length;
+  document.getElementById("stat-rdv").textContent = rdvM.length;
+  document.getElementById("stat-duree").textContent = moy ? formatDuree(moy) : "—";
+  document.getElementById("stat-messages").textContent = msgM.length;
+  document.getElementById("stat-taux").textContent = taux + "%";
 
-    document.getElementById("stat-appels").textContent = appelsMois.length;
-    document.getElementById("stat-rdv").textContent = rdvMois.length;
-    document.getElementById("stat-duree").textContent = dureeMoy > 0 ? formatDuree(dureeMoy) : "—";
-    document.getElementById("stat-messages").textContent = msgMois.length;
-
-    // Derniers appels
-    const derniersAppels = appels.slice(-10).reverse();
-    const listeAppels = document.getElementById("liste-appels");
-    if (derniersAppels.length === 0) {
-      listeAppels.innerHTML = '<p class="empty">Aucun appel pour le moment</p>';
-    } else {
-      listeAppels.innerHTML = derniersAppels.map(r => {
-        const { icon, cls } = getTypeIcon(r[2]);
-        return `
-          <div class="call-item">
-            <div class="call-icon ${cls}">${icon}</div>
-            <div style="flex:1;">
-              <p class="call-name">${r[3] || "Inconnu"}</p>
-              <p class="call-detail">${r[5] || "Appel"}</p>
-            </div>
-            <span class="call-time">${formatDate(r[0])}</span>
-          </div>`;
-      }).join("");
-    }
-
-    // Prochains RDV
-    const rdvRows = await fetchSheet(SHEETS.rdv);
-    const rdvs = rdvRows.slice(1)
-      .filter(r => r[3] && new Date(r[3]) >= now)
-      .sort((a, b) => new Date(a[3]) - new Date(b[3]))
-      .slice(0, 5);
-
-    const listeRdv = document.getElementById("liste-rdv");
-    if (rdvs.length === 0) {
-      listeRdv.innerHTML = '<p class="empty">Aucun RDV à venir</p>';
-    } else {
-      listeRdv.innerHTML = rdvs.map(r => {
-        const dt = new Date(r[3]);
-        const jour = dt.getDate();
-        const mois = dt.toLocaleDateString("fr-CH", { month: "short" });
-        const heure = dt.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
-        return `
-          <div class="rdv-item">
-            <div class="rdv-date">
-              <div class="rdv-day">${jour}</div>
-              <div class="rdv-month">${mois}</div>
-            </div>
-            <div style="flex:1;">
-              <p class="rdv-name">${r[5] || "Client"}</p>
-              <p class="rdv-service">${r[2]} — ${r[1]}</p>
-            </div>
-            <span class="rdv-heure">${heure}</span>
-          </div>`;
-      }).join("");
-    }
-
-    // Derniers messages
-    const messages = appels.filter(r => r[2] === "message").slice(-5).reverse();
-    const listeMsgs = document.getElementById("liste-messages");
-    if (messages.length === 0) {
-      listeMsgs.innerHTML = '<p class="empty">Aucun message pour le moment</p>';
-    } else {
-      listeMsgs.innerHTML = messages.map(r => `
-        <div class="msg-item">
-          <div class="msg-header">
-            <span class="msg-name">${r[3] || "Inconnu"}</span>
-            <span class="msg-time">${formatDate(r[0])}</span>
+  const derniers = allAppels.slice(-8).reverse();
+  document.getElementById("liste-appels").innerHTML = derniers.length
+    ? derniers.map(r => {
+        const { icon, cls } = typeInfo(r[2]);
+        return `<div class="call-item">
+          <div class="call-icon ${cls}">${icon}</div>
+          <div style="flex:1;min-width:0">
+            <p class="call-name">${r[3] || "Inconnu"}</p>
+            <p class="call-detail">${(r[5] || "Appel").substring(0, 70)}</p>
           </div>
-          <p class="msg-text">${r[5] || ""}</p>
-        </div>`
-      ).join("");
-    }
+          <span class="call-time">${formatDate(r[0])}</span>
+        </div>`;
+      }).join("")
+    : '<p class="empty">Aucun appel</p>';
 
+  const prochains = allRdvs.filter(r => r[3] && new Date(r[3]) >= now)
+    .sort((a, b) => new Date(a[3]) - new Date(b[3])).slice(0, 5);
+  document.getElementById("liste-rdv").innerHTML = prochains.length
+    ? prochains.map(r => {
+        const dt = new Date(r[3]);
+        return `<div class="rdv-item">
+          <div class="rdv-date">
+            <div class="rdv-day">${dt.getDate()}</div>
+            <div class="rdv-month">${dt.toLocaleDateString("fr-CH", { month: "short" })}</div>
+          </div>
+          <div style="flex:1">
+            <p class="rdv-name">${r[5] || "Client"}</p>
+            <p class="rdv-service">${r[2] || ""} — ${r[1] || ""}</p>
+          </div>
+          <span class="rdv-heure">${formatTime(r[3])}</span>
+        </div>`;
+      }).join("")
+    : '<p class="empty">Aucun RDV à venir</p>';
+
+  const msgs = allAppels.filter(r => r[2] === "message").slice(-5).reverse();
+  document.getElementById("liste-messages").innerHTML = msgs.length
+    ? msgs.map(r => `<div class="msg-item">
+        <div class="msg-header">
+          <span class="msg-name">${r[3] || "Inconnu"}</span>
+          <span class="msg-time">${formatDate(r[0])}</span>
+        </div>
+        <p class="msg-text">${r[5] || ""}</p>
+      </div>`).join("")
+    : '<p class="empty">Aucun message</p>';
+}
+
+function renderRdvFull(filter) {
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.toggle("active", b.dataset.filter === filter));
+  const now = new Date();
+  let rdvs = allRdvs.filter(r => r[3]);
+  if (filter === "avenir") rdvs = rdvs.filter(r => new Date(r[3]) >= now);
+  else if (filter === "passes") rdvs = rdvs.filter(r => new Date(r[3]) < now);
+  rdvs.sort((a, b) => new Date(b[3]) - new Date(a[3]));
+  document.getElementById("rdv-list-full").innerHTML = rdvs.length
+    ? rdvs.map(r => {
+        const dt = new Date(r[3]), past = dt < now;
+        return `<div class="rdv-row ${past ? "past" : ""}">
+          <div><div class="rdv-row-day">${dt.getDate()} ${dt.toLocaleDateString("fr-CH", { month: "short" })}</div><div class="rdv-row-time">${formatTime(r[3])}</div></div>
+          <div><div class="rdv-row-name">${r[5] || "Client"}</div><div class="rdv-row-phone">${r[4] || ""}</div></div>
+          <div class="rdv-row-service">${r[2] || "—"}</div>
+          <div class="rdv-row-coiff">${r[1] || "—"}</div>
+          <div class="${past ? "status-past" : "status-avenir"}">${past ? "Passé" : "À venir"}</div>
+        </div>`;
+      }).join("")
+    : '<p class="empty">Aucun rendez-vous</p>';
+}
+
+function renderMessagesFull() {
+  const msgs = allAppels.filter(r => r[2] === "message").reverse();
+  document.getElementById("messages-list-full").innerHTML = msgs.length
+    ? msgs.map(r => `<div class="msg-full-item">
+        <div class="msg-full-header">
+          <div><span class="msg-full-name">${r[3] || "Inconnu"}</span><span class="msg-full-phone">${r[4] || ""}</span></div>
+          <span class="msg-full-time">${formatDateFull(r[0])} à ${formatTime(r[0])}</span>
+        </div>
+        <p class="msg-full-text">${r[5] || ""}</p>
+      </div>`).join("")
+    : '<p class="empty">Aucun message</p>';
+}
+
+function renderAppelsFull() {
+  const appels = [...allAppels].reverse();
+  document.getElementById("appels-list-full").innerHTML = appels.length
+    ? appels.map(r => {
+        const { icon, cls, badge } = typeInfo(r[2]);
+        return `<div class="appel-row">
+          <div class="appel-row-icon ${cls}">${icon}</div>
+          <div><div class="appel-row-name">${r[3] || "Inconnu"}</div><div class="appel-row-phone">${r[4] || ""}</div></div>
+          <div class="appel-row-date">${formatDateFull(r[0])} ${formatTime(r[0])}</div>
+          <div class="appel-row-duree">${r[1] ? formatDuree(r[1]) : "—"}</div>
+          <div class="appel-row-type ${badge}">${r[2] || "info"}</div>
+          <div class="appel-row-transcript">${(r[5] || "").substring(0, 100)}</div>
+        </div>`;
+      }).join("")
+    : '<p class="empty">Aucun appel</p>';
+}
+
+function renderCalendar() {
+  const y = currentCalMonth.getFullYear(), m = currentCalMonth.getMonth(), now = new Date();
+  document.getElementById("cal-title").textContent = currentCalMonth.toLocaleDateString("fr-CH", { month: "long", year: "numeric" });
+  const first = new Date(y, m, 1), last = new Date(y, m + 1, 0);
+  let start = first.getDay() === 0 ? 6 : first.getDay() - 1;
+  const byDay = {};
+  allRdvs.forEach(r => {
+    if (!r[3]) return;
+    const d = new Date(r[3]);
+    if (d.getFullYear() === y && d.getMonth() === m) {
+      const k = d.getDate();
+      if (!byDay[k]) byDay[k] = [];
+      byDay[k].push(r);
+    }
+  });
+  const days = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  let html = `<div class="cal-grid">${days.map(d => `<div class="cal-header-cell">${d}</div>`).join("")}`;
+  for (let i = 0; i < start; i++) html += `<div class="cal-cell empty"></div>`;
+  for (let d = 1; d <= last.getDate(); d++) {
+    const today = d === now.getDate() && m === now.getMonth() && y === now.getFullYear();
+    const dr = byDay[d] || [];
+    html += `<div class="cal-cell ${today ? "today" : ""}">
+      <div class="cal-day-num">${d}</div>
+      ${dr.slice(0, 3).map(r => `<div class="cal-rdv-chip" title="${r[5] || "Client"} — ${formatTime(r[3])}"><span>${formatTime(r[3])}</span>${(r[5] || "Client").split(" ")[0]}</div>`).join("")}
+      ${dr.length > 3 ? `<div class="cal-more">+${dr.length - 3}</div>` : ""}
+    </div>`;
+  }
+  html += `</div>`;
+  document.getElementById("cal-body").innerHTML = html;
+}
+
+async function loadData() {
+  try {
+    const [ar, rr] = await Promise.all([fetchSheet(SHEETS.appels), fetchSheet(SHEETS.rdv)]);
+    allAppels = ar.slice(1).filter(r => r[0]);
+    allRdvs = rr.slice(1).filter(r => r[0]);
+    const now = new Date();
+    document.getElementById("periode").textContent = "Tableau de bord — " + now.toLocaleDateString("fr-CH", { month: "long", year: "numeric" });
+    document.getElementById("last-update").textContent = "Mis à jour " + now.toLocaleTimeString("fr-CH", { hour: "2-digit", minute: "2-digit" });
+    renderDashboard();
+    if (currentTab === "rdv") renderRdvFull("tous");
+    if (currentTab === "messages") renderMessagesFull();
+    if (currentTab === "appels") renderAppelsFull();
+    if (currentTab === "calendrier") renderCalendar();
   } catch (e) {
-    console.error("Erreur chargement dashboard:", e);
+    console.error("Erreur:", e);
   }
 }
 
-loadDashboard();
-setInterval(loadDashboard, 60000);
+document.querySelectorAll(".nav-item").forEach(el => el.addEventListener("click", () => setTab(el.dataset.tab)));
+document.querySelectorAll(".filter-btn").forEach(b => b.addEventListener("click", () => renderRdvFull(b.dataset.filter)));
+document.getElementById("cal-prev").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() - 1); renderCalendar(); });
+document.getElementById("cal-next").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() + 1); renderCalendar(); });
+
+loadData();
+setInterval(loadData, 60000);
