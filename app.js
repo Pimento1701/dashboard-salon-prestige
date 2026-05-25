@@ -277,11 +277,13 @@ async function loadData() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
-document.querySelectorAll(".nav-item").forEach(el => el.addEventListener("click", () => setTab(el.dataset.tab)));
-document.querySelectorAll(".filter-btn").forEach(b => b.addEventListener("click", () => renderRdvFull(b.dataset.filter)));
-document.getElementById("cal-prev").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() - 1); renderCalendar(); });
-document.getElementById("cal-next").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() + 1); renderCalendar(); });
-document.getElementById("modal-overlay").addEventListener("click", function(e) { if (e.target === this) closeModal(); });
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".nav-item").forEach(el => el.addEventListener("click", () => setTab(el.dataset.tab)));
+  document.querySelectorAll(".filter-btn").forEach(b => b.addEventListener("click", () => renderRdvFull(b.dataset.filter)));
+  document.getElementById("cal-prev").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() - 1); renderCalendar(); });
+  document.getElementById("cal-next").addEventListener("click", () => { currentCalMonth.setMonth(currentCalMonth.getMonth() + 1); renderCalendar(); });
+  document.getElementById("modal-overlay").addEventListener("click", function(e) { if (e.target === this) closeModal(); });
 
-loadData();
-setInterval(loadData, 60000);
+  loadData();
+  setInterval(loadData, 60000);
+});
